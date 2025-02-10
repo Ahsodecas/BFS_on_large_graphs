@@ -170,48 +170,18 @@ void launch_bfs_gpu_multibuffer(int startVertex, int** adjacencyList, int** edge
         check_error(cudaMemset(nextQueueFlags, 0, numVertices * sizeof(int)), "cudaMemset failed");
         check_error(cudaMemset(blockSums, 0, blocksNum * sizeof(int)), "cudaMemset failed");
 
-        cudaError_t err = cudaGetLastError();
-        if (err != cudaSuccess) {
-            fprintf(stderr, "CUDA Kernel failed after memset of flags and blocks: %s\n", cudaGetErrorString(err));
-            return;
-        }
-
         bfs_gpu_mark << <currQueueSize / THREADS_PER_BLOCK + 1, THREADS_PER_BLOCK >> >(*edgesOffset, *adjacencyList, *edgesSize, *distance, *currQueue, nextQueueFlags, currQueueSize, nextQueueSize, *parent);
         cudaDeviceSynchronize();
-
-        err = cudaGetLastError();
-        if (err != cudaSuccess) {
-            fprintf(stderr, "CUDA Kernel failed after mark: %s\n", cudaGetErrorString(err));
-            return;
-        }
 
         check_error(cudaMemset(nextQueueSize, 0, sizeof(int)), "cudaMemset failed");
 
         bfs_gpu_scan << <blocksNum, THREADS_PER_BLOCK >> > (nextQueueFlags, *nextQueue, numVertices, blockSums, nextQueueSize);
         cudaDeviceSynchronize();
 
-        err = cudaGetLastError();
-        if (err != cudaSuccess) {
-            fprintf(stderr, "CUDA Kernel failed after scan : %s\n", cudaGetErrorString(err));
-            return;
-        }
-
         blockwise_gpu_scan << <1, 1 >> > (blockSums, blocksNum, nextQueueSize);
 
-        err = cudaGetLastError();
-        if (err != cudaSuccess) {
-            fprintf(stderr, "CUDA Kernel failed after scan kernel: %s\n", cudaGetErrorString(err));
-            return;
-        }
-        
         bfs_gpu_form_next_queue << <blocksNum, THREADS_PER_BLOCK >> >(nextQueueFlags, *nextQueue, nextQueueSize, numVertices, blockSums, blocksNum);
         cudaDeviceSynchronize();
-
-        err = cudaGetLastError();
-        if (err != cudaSuccess) {
-            fprintf(stderr, "CUDA Kernel failed after form next queue: %s\n", cudaGetErrorString(err));
-            return;
-        }
 
         check_error(cudaMemcpy(&currQueueSize, nextQueueSize, sizeof(int), cudaMemcpyDeviceToHost), "cudaMemcpy failed in bfs multibuffer currQueueSize!");
 
