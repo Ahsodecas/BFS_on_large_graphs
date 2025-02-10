@@ -5,8 +5,8 @@
 #include <cstdio>
 #include <chrono>
 
-#define GRAPH1_FILENAME "C:\\Users\\nasty\\source\\repos\\bfs_on_large_graphs\\bfs_on_large_graphs\\x64\\Debug\\graph1.txt"
-#define GRAPH2_FILENAME "C:\\Users\\nasty\\source\\repos\\bfs_on_large_graphs\\bfs_on_large_graphs\\x64\\Debug\\graph2.txt"
+#define GRAPH1_FILENAME "graph1.txt"
+#define GRAPH2_FILENAME "graph2.txt"
 #define THREADS_PER_BLOCK 128
 
 void check_error(cudaError_t error, std::string message) 
